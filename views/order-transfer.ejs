@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказать трансфер</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header.tm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 20px;
+            color: white;
+        }
+        .tm-logo {
+            width: 120px;
+            height: auto;
+        }
+        .tm-nav ul {
+            display: flex;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        .tm-nav ul li {
+            margin: 0 15px;
+        }
+        .tm-nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .tm-nav ul li a:hover {
+            text-decoration: underline;
+        }
+        .form {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: center;
+        }
+        .form h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }
+        button, .button {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover, .button:hover {
+            background-color: #0056b3;
+        }
+        .cancel-btn {
+            background-color: #6c757d;
+            text-decoration: none;
+            margin-left: 10px;
+            padding: 12px 20px;
+            border-radius: 5px;
+        }
+        .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+        footer.tm-footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        @media (max-width: 768px) {
+            .tm-nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+            .tm-nav ul li {
+                margin: 10px 0;
+            }
+        }
+        label[for="destination"], label[for="transfer_date"], label[for="transfer_time"] {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <header class="tm-header">
+        <img class="tm-logo" src="images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+        <nav class="tm-nav">
+            <ul>
+                <li><a href="/client-dashboard">Главная</a></li>
+                <li><a href="/logout">Выйти</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <form action="/order-transfer" method="POST" class="form">
+            <h2>Заказ трансфера</h2>
+            <div class="form-group">
+                <label for="destination">Место назначения:</label>
+                <select id="destination" name="destination" required>
+                    <option value="Вокзал Медвежьегорск">Вокзал Медвежьегорск</option>
+                    <option value="Аэропорт Петрозаводск">Аэропорт Петрозаводск</option>
+                    <option value="Вокзал Петрозаводск">Вокзал Петрозаводск</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="transfer_date">Дата:</label>
+                <input type="date" id="transfer_date" name="transfer_date" min="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+            <div class="form-group">
+                <label for="transfer_time">Время:</label>
+                <input type="time" id="transfer_time" name="transfer_time" required>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="button">Подтвердить</button>
+                <a href="/client-dashboard" class="cancel-btn">Отмена</a>
+            </div>
+        </form>
+    </div>
+
+    <footer class="tm-footer">
+        <p>© 2024 Все права защищены.</p>
+    </footer>
+</body>
+</html>

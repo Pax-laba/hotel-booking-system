@@ -45,7 +45,7 @@ addEventListener('DOMContentLoaded', function () {
 
 // map
 function initMap() {
-        var uluru = {lat:  19.735121, lng: -155.014044};  
+        var uluru = {lat:  62.909918, lng: 34.463709};
         var map = new google.maps.Map(document.getElementById('map'), {
           zoom: 14,
           center: uluru
@@ -55,23 +55,6 @@ function initMap() {
           map: map
         });
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // image slider main
 $(document).ready(function(){
@@ -125,8 +108,12 @@ $(document).ready(function(){
    
         });
 
+//Этот код инициализирует кнопку "Прокрутка вверх" с помощью библиотеки scrollUp.
 
-
+//topDistance: '600': кнопка появляется, когда пользователь прокручивает страницу на 600 пикселей вниз.
+//topSpeed: 300: скорость прокрутки обратно к верху (300 миллисекунд).
+//animation: 'fade': анимация исчезновения и появления кнопки.
+//scrollText: '^': текст на кнопке.
 //scrolltotop
  
    $(function () {

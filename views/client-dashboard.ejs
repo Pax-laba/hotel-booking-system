@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления клиентом</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header.tm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 20px;
+            color: white;
+        }
+        .tm-logo {
+            width: 120px;
+            height: auto;
+        }
+        .tm-nav ul {
+            display: flex;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        .tm-nav ul li {
+            margin: 0 15px;
+        }
+        .tm-nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .tm-nav ul li a:hover {
+            text-decoration: underline;
+        }
+        .client-dashboard {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .client-dashboard h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .client-dashboard h3 {
+            font-size: 20px;
+            margin: 30px 0 15px;
+        }
+        .client-dashboard p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #555;
+        }
+        .client-dashboard ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .client-dashboard ul li {
+            margin: 15px 0;
+        }
+        .client-dashboard ul li a {
+            color: #0b0b0b;
+            text-decoration: none;
+            font-size: 18px;
+            padding: 10px;
+            display: inline-block;
+            border: 2px solid #1f2123;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .client-dashboard ul li a:hover {
+            background-color: #344b64;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f8f8;
+        }
+        footer.tm-footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header class="tm-header">
+        <img class="tm-logo" src="images/bear-icon-logo-design-illustration_586739-592.avif" width="120px" height="auto" alt="Majestic Hotel Resort">
+        <nav class="tm-nav">
+            <ul>
+                <li><a href="/client-dashboard">Главная</a></li>
+                <li><a href="/logout">Выйти</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="client-dashboard">
+        <h2>Добро пожаловать, <%= user.name %>!</h2>
+        <p>Что вы хотите сделать?</p>
+        <ul>
+            <li><a href="/view-bookings">Посмотреть историю заказов</a></li>
+            <li><a href="/create-booking">Сделать новое бронирование</a></li>
+            <li><a href="/order-transfer">Заказать трансфер</a></li>
+            <li><a href="/order-service">Заказать услугу</a></li>
+        </ul>
+
+        <h3>Последние бронирования</h3>
+        <% if (bookings && bookings.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Коттедж</th>
+                        <th>Дата заезда</th>
+                        <th>Дата выезда</th>
+                        <th>Статус</th>
+                        <th>Стоимость</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% bookings.forEach(booking => { %>
+                        <tr>
+                            <td><%= booking.room_number %></td>
+                            <td><%= new Date(booking.start_date).toLocaleDateString('ru-RU') %></td>
+                            <td><%= new Date(booking.end_date).toLocaleDateString('ru-RU') %></td>
+                            <td><%= booking.status %></td>
+                            <td><%= booking.total_cost %> руб.</td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>Нет бронирований для отображения.</p>
+        <% } %>
+
+        <h3>Последние трансферы</h3>
+        <% if (transfers && transfers.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Пункт назначения</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% transfers.forEach(transfer => { %>
+                        <tr>
+                            <td><%= transfer.destination %></td>
+                            <td><%= new Date(transfer.transfer_date).toLocaleDateString('ru-RU') %></td>
+                            <td><%= transfer.transfer_time %></td>
+                            <td><%= transfer.status %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>Нет трансферов для отображения.</p>
+        <% } %>
+    </section>
+
+    <footer class="tm-footer"></footer>
+</body>
+</html>
