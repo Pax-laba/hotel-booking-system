@@ -55,10 +55,16 @@
       margin-top: 20px;
     }
     .room-details img {
-      max-width: 100%;
-      height: auto;
+      width: 100%;
+      max-width: 600px;
+      height: auto; /* Убрана фиксированная высота */
+      aspect-ratio: 4 / 3; /* Соотношение сторон для контроля пропорций */
+      object-fit: contain; /* Изображение полностью видно */
       border-radius: 5px;
       margin-bottom: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     .room-details h2 {
       font-size: 28px;
@@ -87,6 +93,18 @@
       padding: 10px;
       margin-top: 20px;
     }
+    @media (max-width: 768px) {
+      .room-details img {
+        max-width: 100%; /* На мобильных занимает всю ширину */
+        aspect-ratio: 4 / 3;
+      }
+    }
+    @media (max-width: 480px) {
+      .room-details img {
+        max-width: 100%;
+        aspect-ratio: 4 / 3;
+      }
+    }
   </style>
 </head>
 <body>
@@ -106,7 +124,32 @@
   <div class="container">
     <section class="room-details">
       <h2><%= room.number %></h2>
-      <img src="/images/<%= room.number.toLowerCase().replace(/\s+/g, '-') %>.jpg" alt="<%= room.number %>">
+      <% 
+        let imageSrc;
+        switch (room.number) {
+          case 'Мишутка':
+            imageSrc = '/images/AAA_0136.jpg';
+            break;
+          case 'Маша Медведь':
+            imageSrc = '/images/pokraska-derevyannogo-doma-02.jpg';
+            break;
+          case 'Мечта':
+            imageSrc = '/images/4.jpg';
+            break;
+          case 'Иван да Марья':
+            imageSrc = '/images/AAA_9648.jpg';
+            break;
+          case 'Теремок':
+            imageSrc = '/images/AAA_57888.jpg';
+            break;
+          case 'Домовенок':
+            imageSrc = '/images/9485645-dereviannyi-dom-vnutri-otdelka-1.jpg';
+            break;
+          default:
+            imageSrc = '/images/default.jpg';
+        }
+      %>
+      <img src="<%= imageSrc %>" alt="<%= room.number %>">
       <p><strong>Цена:</strong> <%= room.price %> руб./сутки</p>
       <p><strong>Описание:</strong> <%= room.description %></p>
       <p><strong>Спальных мест:</strong> <%= room.beds %></p>
