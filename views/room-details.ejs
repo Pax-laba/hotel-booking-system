@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= room.number %></title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header.tm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333;
+      padding: 20px;
+      color: white;
+    }
+    .tm-logo {
+      width: 120px;
+      height: auto;
+    }
+    .tm-nav ul {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tm-nav ul li {
+      margin: 0 15px;
+    }
+    .tm-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .tm-nav ul li a:hover {
+      text-decoration: underline;
+    }
+    .room-details {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .room-details img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .room-details h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+    .room-details p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .room-details a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .room-details a:hover {
+      background-color: #0056b3;
+    }
+    footer.tm-footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header class="tm-header">
+    <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+    <nav class="tm-nav">
+      <ul>
+        <li><a href="/client-dashboard">Главная</a></li>
+        <li><a href="/catalog">Каталог</a></li>     
+        <li><a href="/cart">Корзина</a></li>      
+        <li><a href="/view-bookings">История заказов</a></li>
+        <li><a href="/logout">Выйти</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="room-details">
+      <h2><%= room.number %></h2>
+      <img src="/images/<%= room.number.toLowerCase().replace(/\s+/g, '-') %>.jpg" alt="<%= room.number %>">
+      <p><strong>Цена:</strong> <%= room.price %> руб./сутки</p>
+      <p><strong>Описание:</strong> <%= room.description %></p>
+      <p><strong>Спальных мест:</strong> <%= room.beds %></p>
+      <p><strong>Удобства:</strong> <%= room.amenities %></p>
+      <p><strong>Макс. гостей:</strong> <%= room.max_guests %></p>
+      <a href="/create-booking?room_id=<%= room.id %>">Забронировать</a>
+    </section>
+  </div>
+
+  <footer class="tm-footer">
+    <p>© 2024 Все права защищены.</p>
+  </footer>
+</body>
+</html>

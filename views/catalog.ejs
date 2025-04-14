@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог коттеджей</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header.tm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333;
+      padding: 20px;
+      color: white;
+    }
+    .tm-logo {
+      width: 120px;
+      height: auto;
+    }
+    .tm-nav ul {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tm-nav ul li {
+      margin: 0 15px;
+    }
+    .tm-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .tm-nav ul li a:hover {
+      text-decoration: underline;
+    }
+    .catalog {
+      margin-top: 20px;
+    }
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filters input, .filters select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .filters button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .filters button:hover {
+      background-color: #0056b3;
+    }
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .room-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+    }
+    .room-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+    .room-card h3 {
+      margin: 10px 0;
+      font-size: 20px;
+    }
+    .room-card p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .room-card a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .room-card a:hover {
+      background-color: #0056b3;
+    }
+    footer.tm-footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+    }
+    @media (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+      }
+      .room-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="tm-header">
+    <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+    <nav class="tm-nav">
+      <ul>
+        <li><a href="/client-dashboard">Главная</a></li>
+        <li><a href="/catalog">Каталог</a></li>     
+        <li><a href="/cart">Корзина</a></li>      
+        <li><a href="/view-bookings">История заказов</a></li>
+        <li><a href="/logout">Выйти</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="catalog">
+      <h2>Каталог коттеджей</h2>
+      <form class="filters" action="/catalog" method="GET">
+        <input type="text" name="search" placeholder="Поиск по названию" value="<%= search %>">
+        <select name="sort">
+          <option value="">Сортировка</option>
+          <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>По цене (возр.)</option>
+          <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>По цене (убыв.)</option>
+        </select>
+        <input type="number" name="max_guests" placeholder="Макс. гостей" value="<%= max_guests %>" min="1">
+        <button type="submit">Применить</button>
+      </form>
+      <div class="room-grid">
+        <% rooms.forEach(room => { %>
+          <div class="room-card">
+            <img src="/images/<%= room.number.toLowerCase().replace(/\s+/g, '-') %>.jpg" alt="<%= room.number %>">
+            <h3><%= room.number %></h3>
+            <p>Цена: <%= room.price %> руб./сутки</p>
+            <p>Гостей: <%= room.max_guests %></p>
+            <a href="/room/<%= room.id %>">Подробнее</a>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  </div>
+
+  <footer class="tm-footer">
+    <p>© 2024 Все права защищены.</p>
+  </footer>
+</body>
+</html>

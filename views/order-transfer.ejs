@@ -135,13 +135,17 @@
         <nav class="tm-nav">
             <ul>
                 <li><a href="/client-dashboard">Главная</a></li>
+                <li><a href="/catalog">Каталог</a></li>     
+                <li><a href="/cart">Корзина</a></li>      
+                <li><a href="/view-bookings">История заказов</a></li>
                 <li><a href="/logout">Выйти</a></li>
             </ul>
         </nav>
     </header>
 
     <div class="container">
-        <form action="/order-transfer" method="POST" class="form">
+        <!-- <form action="/order-transfer" method="POST" class="form"> -->
+            <form action="/cart/add" method="POST" class="form">
             <h2>Заказ трансфера</h2>
             <div class="form-group">
                 <label for="destination">Место назначения:</label>
@@ -159,6 +163,7 @@
                 <label for="transfer_time">Время:</label>
                 <input type="time" id="transfer_time" name="transfer_time" required>
             </div>
+            <input type="hidden" name="type" value="transfer">
             <div class="form-buttons">
                 <button type="submit" class="button">Подтвердить</button>
                 <a href="/client-dashboard" class="cancel-btn">Отмена</a>

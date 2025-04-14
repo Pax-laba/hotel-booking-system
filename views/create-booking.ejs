@@ -151,6 +151,9 @@
         <nav class="tm-nav">
             <ul>
                 <li><a href="/client-dashboard">Главная</a></li>
+                <li><a href="/catalog">Каталог</a></li>     
+                <li><a href="/cart">Корзина</a></li>      
+                <li><a href="/view-bookings">История заказов</a></li>
                 <li><a href="/logout">Выйти</a></li>
             </ul>
         </nav>
@@ -158,7 +161,8 @@
 
     <section class="create-booking">
         <h2>Создание нового бронирования</h2>
-        <form action="/create-booking" method="POST">
+        <!-- <form action="/create-booking" method="POST"> -->
+            <form action="/cart/add" method="POST" class="form">
             <h1>Выберите коттедж:</h1>
             <div class="cottage-grid">
                 <div class="cottage" data-room-id="1" data-price="15000" onclick="selectCottage(this)">
@@ -205,7 +209,8 @@
             <input type="text" id="end_date" name="end_date" required>
 
             <div><h2></h2></div>
-            <div><button type="submit">Забронировать</button></div>
+            <input type="hidden" name="type" value="room">
+            <div><button type="submit">Добавить в корзину</button></div>
         </form>
     </section>
 
@@ -213,42 +218,36 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        let unavailableDates = [];
-
-        function selectCottage(element) {
-            const cottages = document.querySelectorAll('.cottage');
-            cottages.forEach(cottage => cottage.classList.remove('selected'));
-            element.classList.add('selected');
-            const roomId = element.getAttribute('data-room-id');
-            const price = element.getAttribute('data-price');
-            document.getElementById('room_id').value = roomId;
-            document.getElementById('price').value = price;
-            document.getElementById('pricePerDay').innerText = price;
-            fetch(`/get-unavailable-dates?room_id=${roomId}`)
-                .then(response => response.json())
-                .then(data => {
-                    unavailableDates = data.unavailableDates;
-                    initializeCalendar();
-                })
-                .catch(error => console.error('Ошибка при получении занятых дат:', error));
-        }
-
-        function initializeCalendar() {
-            flatpickr("#start_date", {
-                disable: unavailableDates,
-                dateFormat: "Y-m-d",
-                minDate: "today"
-            });
-            flatpickr("#end_date", {
-                disable: unavailableDates,
-                dateFormat: "Y-m-d",
-                minDate: "today"
-            });
-        }
-
-        window.onload = function() {
+      let unavailableDates = [];
+      function selectCottage(element) {
+        const cottages = document.querySelectorAll('.cottage');
+        cottages.forEach(cottage => cottage.classList.remove('selected'));
+        element.classList.add('selected');
+        const roomId = element.getAttribute('data-room-id');
+        document.getElementById('room_id').value = roomId;
+        fetch(`/get-unavailable-dates?room_id=${roomId}`)
+          .then(response => response.json())
+          .then(data => {
+            unavailableDates = data.unavailableDates;
             initializeCalendar();
-        };
+          })
+          .catch(error => console.error('Ошибка при получении занятых дат:', error));
+      }
+      function initializeCalendar() {
+        flatpickr("#start_date", {
+          disable: unavailableDates,
+          dateFormat: "Y-m-d",
+          minDate: "today"
+        });
+        flatpickr("#end_date", {
+          disable: unavailableDates,
+          dateFormat: "Y-m-d",
+          minDate: "today"
+        });
+      }
+      window.onload = function() {
+        initializeCalendar();
+      };
     </script>
 </body>
 </html>
