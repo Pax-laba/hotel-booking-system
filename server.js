@@ -8,6 +8,10 @@ const dotenv = require('dotenv');
 const ejs = require('ejs');
 const pgSession = require('connect-pg-simple')(session);
 
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 
 dotenv.config();
@@ -37,6 +41,13 @@ pool.connect((err) => {
   console.log('Connected to PostgreSQL database');
 });
 
+
+
+// Middleware
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname)));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(session({
   store: new pgSession({
     pool: pool, // Подключение к PostgreSQL
@@ -48,17 +59,33 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 день
 }));
 
-// Middleware
-app.use(express.static(path.join(__dirname)));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(session({
-  secret: 'hotel_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // Установите secure: true, если используете HTTPS
+// Логирование запросов
+app.use(morgan('combined', {
+  stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
 }));
 
+// Установка visitorId через cookies
+app.use((req, res, next) => {
+  if (!req.cookies.visitorId) {
+    res.cookie('visitorId', uuidv4(), { maxAge: 365 * 24 * 60 * 60 * 1000 });
+  }
+  next();
+});
+
+// Запись просмотров страниц
+app.use(async (req, res, next) => {
+  try {
+    if (req.cookies && req.cookies.visitorId) {
+      await pool.query(
+        'INSERT INTO page_views (visitor_id, page_url, view_date) VALUES ($1, $2, NOW())',
+        [req.cookies.visitorId, req.originalUrl]
+      );
+    }
+  } catch (error) {
+    console.error('Ошибка записи просмотра:', error);
+  }
+  next();
+});
 // Middleware для проверки авторизации
 const requireAuth = (req, res, next) => {
   if (!req.session.user) {
@@ -793,14 +820,18 @@ app.get('/catalog', async (req, res) => {
 
 // Информация о коттедже
 app.get('/room/:id', async (req, res) => {
-  const { id } = req.params;
   try {
-    const query = 'SELECT * FROM rooms WHERE id = $1';
-    const result = await pool.query(query, [id]);
-    if (result.rows.length === 0) {
+    const roomResult = await pool.query('SELECT * FROM rooms WHERE id = $1', [req.params.id]);
+    if (roomResult.rows.length === 0) {
       return res.status(404).send('Коттедж не найден');
     }
-    res.render('room-details', { room: result.rows[0] });
+    if (req.session.user) {
+      await pool.query(
+        'INSERT INTO sales_metrics (room_id, action, user_id, created_at) VALUES ($1, $2, $3, NOW())',
+        [req.params.id, 'view', req.session.user.id]
+      );
+    }
+    res.render('room-details', { room: roomResult.rows[0] });
   } catch (error) {
     console.error('Ошибка загрузки коттеджа:', error);
     res.status(500).send('Ошибка сервера');
@@ -808,66 +839,36 @@ app.get('/room/:id', async (req, res) => {
 });
 
 // Добавление в корзину
-app.post('/cart/add', async (req, res) => {
-  const { room_id, start_date, end_date, destination, transfer_date, transfer_time, type } = req.body;
-  console.log('Получены данные для корзины:', req.body); // Отладка
-  
-  if (!req.session.cart) {
-    req.session.cart = { rooms: [], transfers: [] };
-    console.log('Создана новая корзина:', req.session.cart);
-  }
-  
+app.post('/cart/add', requireAuth, async (req, res) => {
+  const { room_id, start_date, end_date, type, destination, transfer_date, transfer_time } = req.body;
+  let cart = req.session.cart || { rooms: [], transfers: [] };
   try {
     if (type === 'room') {
-      if (!room_id || !start_date || !end_date) {
-        console.error('Недостаточно данных для комнаты:', { room_id, start_date, end_date });
-        return res.status(400).send('Заполните все поля для бронирования');
-      }
-      
-      const roomQuery = 'SELECT number, price FROM rooms WHERE id = $1';
-      const roomResult = await pool.query(roomQuery, [room_id]);
+      const roomResult = await pool.query('SELECT * FROM rooms WHERE id = $1', [room_id]);
       if (roomResult.rows.length === 0) {
-        console.error('Коттедж не найден:', room_id);
         return res.status(404).send('Коттедж не найден');
       }
-      
-      const startDate = new Date(start_date);
-      const endDate = new Date(end_date);
-      if (startDate >= endDate) {
-        console.error('Неверные даты:', { start_date, end_date });
-        return res.status(400).send('Дата выезда должна быть позже даты заезда');
-      }
-      
-      const numberOfDays = Math.ceil((endDate - startDate) / (1000 * 3600 * 24));
-      const totalCost = numberOfDays * roomResult.rows[0].price;
-      
-      req.session.cart.rooms.push({
+      const room = roomResult.rows[0];
+      const start = new Date(start_date);
+      const end = new Date(end_date);
+      const days = (end - start) / (1000 * 60 * 60 * 24);
+      const total_cost = room.price * days;
+      cart.rooms.push({
         room_id,
-        number: roomResult.rows[0].number,
+        number: room.number,
         start_date,
         end_date,
-        total_cost: totalCost
+        total_cost
       });
-      console.log('Добавлена комната в корзину:', req.session.cart.rooms);
+      await pool.query(
+        'INSERT INTO sales_metrics (room_id, action, user_id, created_at) VALUES ($1, $2, $3, NOW())',
+        [room_id, 'add_to_cart', req.session.user.id]
+      );
     } else if (type === 'transfer') {
-      if (!destination || !transfer_date || !transfer_time) {
-        console.error('Недостаточно данных для трансфера:', { destination, transfer_date, transfer_time });
-        return res.status(400).send('Заполните все поля для трансфера');
-      }
-      
-      req.session.cart.transfers.push({
-        destination,
-        transfer_date,
-        transfer_time
-      });
-      console.log('Добавлен трансфер в корзину:', req.session.cart.transfers);
-    } else {
-      console.error('Неизвестный или отсутствующий тип:', type);
-      return res.status(400).send(`Неверный тип: ${type || 'отсутствует'}`);
+      cart.transfers.push({ destination, transfer_date, transfer_time });
     }
-    
-    await req.session.save(); // Явно сохраняем сессию
-    console.log('Сессия сохранена:', req.session.cart);
+    req.session.cart = cart;
+    await req.session.save();
     res.redirect('/cart');
   } catch (error) {
     console.error('Ошибка добавления в корзину:', error);
@@ -904,9 +905,7 @@ app.get('/checkout', requireAuth, (req, res) => {
 app.post('/checkout', requireAuth, async (req, res) => {
   const cart = req.session.cart || { rooms: [], transfers: [] };
   const userId = req.session.user.id;
-  
   try {
-    // Сохраняем брони
     for (const room of cart.rooms) {
       const overlapQuery = `
         SELECT id
@@ -923,21 +922,21 @@ app.post('/checkout', requireAuth, async (req, res) => {
       if (overlapResult.rows.length > 0) {
         return res.status(400).send('Коттедж занят на выбранные даты');
       }
-      
       await pool.query(
         'INSERT INTO bookings (user_id, room_id, start_date, end_date, status, total_cost) VALUES ($1, $2, $3, $4, $5, $6)',
         [userId, room.room_id, room.start_date, room.end_date, 'reserved', room.total_cost]
       );
+      await pool.query(
+        'INSERT INTO sales_metrics (room_id, action, user_id, created_at) VALUES ($1, $2, $3, NOW())',
+        [room.room_id, 'purchase', userId]
+      );
     }
-    
-    // Сохраняем трансферы
     for (const transfer of cart.transfers) {
       await pool.query(
         'INSERT INTO transfers (user_id, destination, transfer_date, transfer_time, status) VALUES ($1, $2, $3, $4, $5)',
         [userId, transfer.destination, transfer.transfer_date, transfer.transfer_time, 'pending']
       );
     }
-    
     // Очищаем корзину
     req.session.cart = { rooms: [], transfers: [] };
     await req.session.save();
@@ -948,6 +947,150 @@ app.post('/checkout', requireAuth, async (req, res) => {
   }
 });
 
+
+// Маршрут для личного кабинета
+// Маршрут для личного кабинета
+app.get('/profile', requireAuth, async (req, res) => {
+  try {
+    res.render('profile', {
+      user: req.session.user,
+      error: null
+    });
+  } catch (error) {
+    console.error('Ошибка загрузки профиля:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Маршрут для редактирования профиля
+app.post('/profile', requireAuth, async (req, res) => {
+  const { name, email, phone, address, old_password, password } = req.body;
+  try {
+    // Проверка email на уникальность
+    const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, req.session.user.id]);
+    if (emailCheck.rows.length > 0) {
+      return res.render('profile', {
+        user: req.session.user,
+        error: 'Email уже используется'
+      });
+    }
+
+    // Если указан новый пароль, проверяем старый
+    if (password) {
+      if (!old_password) {
+        return res.render('profile', {
+          user: req.session.user,
+          error: 'Введите текущий пароль для смены пароля'
+        });
+      }
+      const userQuery = await pool.query('SELECT password FROM users WHERE id = $1', [req.session.user.id]);
+      const isMatch = await bcrypt.compare(old_password, userQuery.rows[0].password);
+      if (!isMatch) {
+        return res.render('profile', {
+          user: req.session.user,
+          error: 'Неверный текущий пароль'
+        });
+      }
+    }
+
+    // Обновление профиля
+    let query = 'UPDATE users SET name = $1, email = $2, phone = $3, address = $4, updated_at = NOW()';
+    const params = [name, email, phone || null, address || null, req.session.user.id];
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query += ', password = $5 WHERE id = $6';
+      params.splice(4, 0, hashedPassword);
+    } else {
+      query += ' WHERE id = $5';
+    }
+    await pool.query(query, params);
+
+    // Обновление сессии
+    req.session.user = { ...req.session.user, name, email, phone, address };
+    await req.session.save();
+
+    res.redirect('/profile');
+  } catch (error) {
+    console.error('Ошибка обновления профиля:', error);
+    res.render('profile', {
+      user: req.session.user,
+      error: 'Ошибка сервера'
+    });
+  }
+});
+
+// Маршрут для статистики продаж
+app.get('/sales-statistics', requireAdmin, async (req, res) => {
+  const { start_date, end_date, type } = req.query;
+  try {
+    let bookingsQuery = `
+      SELECT r.number AS room_number, COUNT(b.id) AS bookings_count, COALESCE(SUM(b.total_cost), 0) AS total_revenue
+      FROM bookings b
+      JOIN rooms r ON b.room_id = r.id
+      WHERE b.status IN ('reserved', 'confirmed')
+    `;
+    let transfersQuery = `
+      SELECT destination, COUNT(id) AS transfers_count
+      FROM transfers
+      WHERE status = 'confirmed'
+    `;
+    const paramsBookings = [];
+    const paramsTransfers = [];
+    if (start_date) {
+      bookingsQuery += ` AND b.start_date >= $1`;
+      transfersQuery += ` AND transfer_date >= $1`;
+      paramsBookings.push(start_date);
+      paramsTransfers.push(start_date);
+    }
+    if (end_date) {
+      const endIndex = paramsBookings.length + 1;
+      bookingsQuery += ` AND b.end_date <= $${endIndex}`;
+      transfersQuery += ` AND transfer_date <= $${endIndex}`;
+      paramsBookings.push(end_date);
+      paramsTransfers.push(end_date);
+    }
+    bookingsQuery += ` GROUP BY r.number`;
+    transfersQuery += ` GROUP BY destination`;
+    const bookingsResult = type === 'transfers' ? { rows: [] } : await pool.query(bookingsQuery, paramsBookings);
+    const transfersResult = type === 'bookings' ? { rows: [] } : await pool.query(transfersQuery, paramsTransfers);
+    res.render('sales-statistics', {
+      bookings: bookingsResult.rows,
+      transfers: transfersResult.rows,
+      start_date: start_date || '',
+      end_date: end_date || '',
+      type: type || ''
+    });
+  } catch (error) {
+    console.error('Ошибка статистики:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Маршрут для статистики посещений
+app.get('/visit-statistics', requireAdmin, async (req, res) => {
+  try {
+    const pageViews = await pool.query(`
+      SELECT page_url, COUNT(*) AS view_count
+      FROM page_views
+      GROUP BY page_url
+      ORDER BY view_count DESC
+    `);
+    const salesActions = await pool.query(`
+      SELECT r.number AS room_number, m.action, COUNT(*) AS action_count
+      FROM sales_metrics m
+      JOIN rooms r ON m.room_id = r.id
+      GROUP BY r.number, m.action
+      ORDER BY r.number, m.action
+    `);
+    res.render('visit-statistics', {
+      pageViews: pageViews.rows,
+      salesActions: salesActions.rows
+    });
+  } catch (error) {
+    console.error('Ошибка статистики посещений:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
 // Запуск сервера
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

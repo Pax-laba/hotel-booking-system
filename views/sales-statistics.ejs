@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Статистика продаж</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header.tm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333;
+      padding: 20px;
+      color: white;
+    }
+    .tm-logo {
+      width: 120px;
+      height: auto;
+    }
+    .tm-nav ul {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tm-nav ul li {
+      margin: 0 15px;
+    }
+    .tm-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .tm-nav ul li a:hover {
+      text-decoration: underline;
+    }
+    .statistics {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .statistics h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filters input, .filters select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .filters button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .filters button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    footer.tm-footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header class="tm-header">
+    <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+    <nav class="tm-nav">
+      <ul>
+        <li><a href="/admin-dashboard">Админ-панель</a></li>
+        <li><a href="/sales-statistics">Статистика продаж</a></li>
+        <li><a href="/logout">Выйти</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="statistics">
+      <h2>Статистика продаж</h2>
+      <form class="filters" action="/sales-statistics" method="GET">
+        <input type="date" name="start_date" value="<%= start_date %>">
+        <input type="date" name="end_date" value="<%= end_date %>">
+        <select name="type">
+          <option value="">Все типы</option>
+          <option value="bookings" <%= type === 'bookings' ? 'selected' : '' %>>Бронирования</option>
+          <option value="transfers" <%= type === 'transfers' ? 'selected' : '' %>>Трансферы</option>
+        </select>
+        <button type="submit">Фильтровать</button>
+      </form>
+      <h3>Бронирования</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Коттедж</th>
+            <th>Количество бронирований</th>
+            <th>Общая выручка</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bookings.forEach(stat => { %>
+            <tr>
+              <td><%= stat.room_number %></td>
+              <td><%= stat.bookings_count %></td>
+              <td><%= stat.total_revenue %> руб.</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <h3>Трансферы</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Пункт назначения</th>
+            <th>Количество заказов</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transfers.forEach(stat => { %>
+            <tr>
+              <td><%= stat.destination %></td>
+              <td><%= stat.transfers_count %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <footer class="tm-footer">
+    <p>© 2024 Все права защищены.</p>
+  </footer>
+</body>
+</html>

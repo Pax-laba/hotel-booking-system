@@ -13,12 +13,21 @@
         <nav class="tm-nav">
             <ul>
                 <li><a href="/admin-dashboard">Главная</a></li>
+                <li><a href="/sales-statistics">Статистика продаж</a></li>
+                <li><a href="/visit-statistics">Статистика посещений</a></li>
                 <li><a href="/logout">Выйти</a></li>
             </ul>
         </nav>
     </header>
 
     <section class="admin-dashboard">
+        <nav class="tm-nav">
+            <ul>
+              <li><a href="/admin-dashboard">Админ-панель</a></li>
+              <li><a href="/sales-statistics">Статистика продаж</a></li>
+              <li><a href="/logout">Выйти</a></li>
+            </ul>
+          </nav>
         <h2>Добро пожаловать, <%= user.name %>!</h2>
 
         <!-- Форма фильтрации -->
