@@ -55,12 +55,20 @@
       gap: 15px;
       margin-bottom: 20px;
       flex-wrap: wrap;
+      align-items: center;
+    }
+    .filters label {
+      color: black;
+      font-size: 16px;
+      font-weight: normal;
+      margin-right: 5px;
     }
     .filters input, .filters select {
       padding: 10px;
       font-size: 16px;
       border: 1px solid #ccc;
       border-radius: 5px;
+      width: 200px;
     }
     .filters button {
       padding: 10px 20px;
@@ -84,10 +92,12 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       padding: 15px;
       text-align: center;
+      position: relative;
     }
     .room-card img {
-      max-width: 100%;
-      height: auto;
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
       border-radius: 5px;
     }
     .room-card h3 {
@@ -110,6 +120,20 @@
     .room-card a:hover {
       background-color: #0056b3;
     }
+    .room-card .price {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 5px 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: 16px;
+      border-radius: 3px;
+      display: none;
+    }
+    .room-card:hover .price {
+      display: block;
+    }
     footer.tm-footer {
       background-color: #333;
       color: white;
@@ -120,6 +144,10 @@
     @media (max-width: 768px) {
       .filters {
         flex-direction: column;
+        align-items: flex-start;
+      }
+      .filters input, .filters select {
+        width: 100%;
       }
       .room-grid {
         grid-template-columns: 1fr;
@@ -145,20 +173,49 @@
     <section class="catalog">
       <h2>Каталог коттеджей</h2>
       <form class="filters" action="/catalog" method="GET">
-        <input type="text" name="search" placeholder="Поиск по названию" value="<%= search %>">
-        <select name="sort">
-          <option value="">Сортировка</option>
+        <label for="search">Поиск по названию:</label>
+        <input type="text" id="search" name="search" placeholder="Введите название" value="<%= search %>">
+        <label for="sort">Сортировка:</label>
+        <select id="sort" name="sort">
+          <option value="">Без сортировки</option>
           <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>По цене (возр.)</option>
           <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>По цене (убыв.)</option>
         </select>
-        <input type="number" name="max_guests" placeholder="Макс. гостей" value="<%= max_guests %>" min="1">
+        <label for="max_guests">Макс. гостей:</label>
+        <input type="number" id="max_guests" name="max_guests" placeholder="Количество гостей" value="<%= max_guests %>" min="1">
         <button type="submit">Применить</button>
       </form>
       <div class="room-grid">
         <% rooms.forEach(room => { %>
           <div class="room-card">
-            <img src="/images/<%= room.number.toLowerCase().replace(/\s+/g, '-') %>.jpg" alt="<%= room.number %>">
+            <% 
+              let imageSrc;
+              switch (room.number) {
+                case 'Мишутка':
+                  imageSrc = '/images/AAA_0136.jpg';
+                  break;
+                case 'Маша Медведь':
+                  imageSrc = '/images/pokraska-derevyannogo-doma-02.jpg';
+                  break;
+                case 'Мечта':
+                  imageSrc = '/images/4.jpg';
+                  break;
+                case 'Иван да Марья':
+                  imageSrc = '/images/AAA_9648.jpg';
+                  break;
+                case 'Теремок':
+                  imageSrc = '/images/AAA_57888.jpg';
+                  break;
+                case 'Домовенок':
+                  imageSrc = '/images/9485645-dereviannyi-dom-vnutri-otdelka-1.jpg';
+                  break;
+                default:
+                  imageSrc = '/images/default.jpg';
+              }
+            %>
+            <img src="<%= imageSrc %>" alt="<%= room.number %>">
             <h3><%= room.number %></h3>
+            <div class="price"><%= room.price %> руб.</div>
             <p>Цена: <%= room.price %> руб./сутки</p>
             <p>Гостей: <%= room.max_guests %></p>
             <a href="/room/<%= room.id %>">Подробнее</a>
