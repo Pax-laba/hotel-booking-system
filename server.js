@@ -6,6 +6,9 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const dotenv = require('dotenv');
 const ejs = require('ejs');
+const pgSession = require('connect-pg-simple')(session);
+
+
 
 dotenv.config();
 const app = express();
@@ -24,6 +27,7 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432
 });
 
+
 // Проверка подключения к базе данных
 pool.connect((err) => {
   if (err) {
@@ -32,6 +36,17 @@ pool.connect((err) => {
   }
   console.log('Connected to PostgreSQL database');
 });
+
+app.use(session({
+  store: new pgSession({
+    pool: pool, // Подключение к PostgreSQL
+    tableName: 'session'
+  }),
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 день
+}));
 
 // Middleware
 app.use(express.static(path.join(__dirname)));
@@ -295,9 +310,8 @@ app.post('/admin/close-booking', requireAdmin, async (req, res) => {
 app.get('/get-unavailable-dates', async (req, res) => {
   const { room_id } = req.query;
   try {
-    // Учитываем только активные брони (reserved или confirmed)
     const query = `
-      SELECT start_date, end_date
+      SELECT start_date, end_date + INTERVAL '1 day' as end_date
       FROM bookings
       WHERE room_id = $1 AND status IN ('reserved', 'confirmed')
     `;
@@ -734,6 +748,206 @@ app.get('/admin-dashboard', requireAdmin, async (req, res) => {
     res.status(500).send('Ошибка загрузки данных');
   }
 });
+
+
+// Каталог коттеджей
+app.get('/catalog', async (req, res) => {
+  const { search, sort, max_guests } = req.query;
+  let query = 'SELECT * FROM rooms WHERE availability_status = $1';
+  const params = ['available'];
+  
+  // Поиск по названию
+  if (search) {
+    query += ' AND number ILIKE $' + (params.length + 1);
+    params.push(`%${search}%`);
+  }
+  
+  // Фильтрация по количеству гостей
+  if (max_guests) {
+    query += ' AND max_guests >= $' + (params.length + 1);
+    params.push(parseInt(max_guests));
+  }
+  
+  // Сортировка
+  if (sort === 'price_asc') {
+    query += ' ORDER BY price ASC';
+  } else if (sort === 'price_desc') {
+    query += ' ORDER BY price DESC';
+  } else {
+    query += ' ORDER BY number';
+  }
+  
+  try {
+    const result = await pool.query(query, params);
+    res.render('catalog', {
+      rooms: result.rows,
+      search: search || '',
+      max_guests: max_guests || '',
+      sort: sort || ''
+    });
+  } catch (error) {
+    console.error('Ошибка загрузки каталога:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Информация о коттедже
+app.get('/room/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = 'SELECT * FROM rooms WHERE id = $1';
+    const result = await pool.query(query, [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).send('Коттедж не найден');
+    }
+    res.render('room-details', { room: result.rows[0] });
+  } catch (error) {
+    console.error('Ошибка загрузки коттеджа:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Добавление в корзину
+app.post('/cart/add', async (req, res) => {
+  const { room_id, start_date, end_date, destination, transfer_date, transfer_time, type } = req.body;
+  console.log('Получены данные для корзины:', req.body); // Отладка
+  
+  if (!req.session.cart) {
+    req.session.cart = { rooms: [], transfers: [] };
+    console.log('Создана новая корзина:', req.session.cart);
+  }
+  
+  try {
+    if (type === 'room') {
+      if (!room_id || !start_date || !end_date) {
+        console.error('Недостаточно данных для комнаты:', { room_id, start_date, end_date });
+        return res.status(400).send('Заполните все поля для бронирования');
+      }
+      
+      const roomQuery = 'SELECT number, price FROM rooms WHERE id = $1';
+      const roomResult = await pool.query(roomQuery, [room_id]);
+      if (roomResult.rows.length === 0) {
+        console.error('Коттедж не найден:', room_id);
+        return res.status(404).send('Коттедж не найден');
+      }
+      
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+      if (startDate >= endDate) {
+        console.error('Неверные даты:', { start_date, end_date });
+        return res.status(400).send('Дата выезда должна быть позже даты заезда');
+      }
+      
+      const numberOfDays = Math.ceil((endDate - startDate) / (1000 * 3600 * 24));
+      const totalCost = numberOfDays * roomResult.rows[0].price;
+      
+      req.session.cart.rooms.push({
+        room_id,
+        number: roomResult.rows[0].number,
+        start_date,
+        end_date,
+        total_cost: totalCost
+      });
+      console.log('Добавлена комната в корзину:', req.session.cart.rooms);
+    } else if (type === 'transfer') {
+      if (!destination || !transfer_date || !transfer_time) {
+        console.error('Недостаточно данных для трансфера:', { destination, transfer_date, transfer_time });
+        return res.status(400).send('Заполните все поля для трансфера');
+      }
+      
+      req.session.cart.transfers.push({
+        destination,
+        transfer_date,
+        transfer_time
+      });
+      console.log('Добавлен трансфер в корзину:', req.session.cart.transfers);
+    } else {
+      console.error('Неизвестный или отсутствующий тип:', type);
+      return res.status(400).send(`Неверный тип: ${type || 'отсутствует'}`);
+    }
+    
+    await req.session.save(); // Явно сохраняем сессию
+    console.log('Сессия сохранена:', req.session.cart);
+    res.redirect('/cart');
+  } catch (error) {
+    console.error('Ошибка добавления в корзину:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Отображение корзины
+app.get('/cart', (req, res) => {
+  const cart = req.session.cart || { rooms: [], transfers: [] };
+  console.log('Отображение корзины:', cart); // Отладка
+  res.render('cart', { cart });
+});
+
+// Удаление из корзины
+app.post('/cart/remove', (req, res) => {
+  const { index, type } = req.body;
+  if (!req.session.cart) return res.redirect('/cart');
+  
+  if (type === 'room') {
+    req.session.cart.rooms.splice(index, 1);
+  } else if (type === 'transfer') {
+    req.session.cart.transfers.splice(index, 1);
+  }
+  res.redirect('/cart');
+});
+
+// Оформление заказа
+app.get('/checkout', requireAuth, (req, res) => {
+  const cart = req.session.cart || { rooms: [], transfers: [] };
+  res.render('checkout', { cart, user: req.session.user });
+});
+
+app.post('/checkout', requireAuth, async (req, res) => {
+  const cart = req.session.cart || { rooms: [], transfers: [] };
+  const userId = req.session.user.id;
+  
+  try {
+    // Сохраняем брони
+    for (const room of cart.rooms) {
+      const overlapQuery = `
+        SELECT id
+        FROM bookings
+        WHERE room_id = $1
+        AND status IN ('reserved', 'confirmed')
+        AND (
+          (start_date <= $2 AND end_date >= $2) OR
+          (start_date <= $3 AND end_date >= $3) OR
+          (start_date >= $2 AND end_date <= $3)
+        )
+      `;
+      const overlapResult = await pool.query(overlapQuery, [room.room_id, room.start_date, room.end_date]);
+      if (overlapResult.rows.length > 0) {
+        return res.status(400).send('Коттедж занят на выбранные даты');
+      }
+      
+      await pool.query(
+        'INSERT INTO bookings (user_id, room_id, start_date, end_date, status, total_cost) VALUES ($1, $2, $3, $4, $5, $6)',
+        [userId, room.room_id, room.start_date, room.end_date, 'reserved', room.total_cost]
+      );
+    }
+    
+    // Сохраняем трансферы
+    for (const transfer of cart.transfers) {
+      await pool.query(
+        'INSERT INTO transfers (user_id, destination, transfer_date, transfer_time, status) VALUES ($1, $2, $3, $4, $5)',
+        [userId, transfer.destination, transfer.transfer_date, transfer.transfer_time, 'pending']
+      );
+    }
+    
+    // Очищаем корзину
+    req.session.cart = { rooms: [], transfers: [] };
+    await req.session.save();
+    res.redirect('/view-bookings');
+  } catch (error) {
+    console.error('Ошибка оформления заказа:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
 // Запуск сервера
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
