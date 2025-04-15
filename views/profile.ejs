@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header.tm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333;
+      padding: 20px;
+      color: white;
+    }
+    .tm-logo {
+      width: 120px;
+      height: auto;
+    }
+    .tm-nav ul {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tm-nav ul li {
+      margin: 0 15px;
+    }
+    .tm-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .tm-nav ul li a:hover {
+      text-decoration: underline;
+    }
+    .profile {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .profile h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .profile p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .profile-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 400px;
+    }
+    .profile-form label {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 5px;
+      display: block;
+    }
+    .profile-form input {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+      color: #000;
+    }
+    .profile-form input:focus {
+      border-color: #007BFF;
+      outline: none;
+      box-shadow: 0 0 5px rgba(0,123,255,0.3);
+    }
+    .profile-form input::placeholder {
+      color: #999;
+    }
+    .profile-form button {
+      padding: 12px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    .profile-form button:hover {
+      background-color: #0056b3;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    footer.tm-footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header class="tm-header">
+    <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+    <nav class="tm-nav">
+      <ul>
+        <li><a href="/profile">Личный кабинет</a></li>
+        <li><a href="/catalog">Каталог</a></li>     
+        <li><a href="/cart">Корзина</a></li>      
+        <li><a href="/view-bookings">История заказов</a></li>
+        <li><a href="/logout">Выйти</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="profile">
+      <h2>Личный кабинет</h2>
+      <p><strong>ФИО:</strong> <%= user.name %></p>
+      <p><strong>Телефон:</strong> <%= user.phone || 'Не указан' %></p>
+      <p><strong>Email:</strong> <%= user.email %></p>
+      <p><strong>Адрес:</strong> <%= user.address || 'Не указан' %></p>
+      <h3>Редактировать профиль</h3>
+      <% if (typeof error !== 'undefined') { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+      <form action="/profile" method="POST" class="profile-form">
+        <div>
+          <label for="name">ФИО:</label>
+          <input type="text" id="name" name="name" placeholder="Введите ФИО" value="<%= user.name %>" required>
+        </div>
+        <div>
+          <label for="phone">Телефон:</label>
+          <input type="text" id="phone" name="phone" placeholder="Введите телефон" value="<%= user.phone || '' %>">
+        </div>
+        <div>
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" placeholder="Введите email" value="<%= user.email %>" required>
+        </div>
+        <div>
+          <label for="address">Адрес:</label>
+          <input type="text" id="address" name="address" placeholder="Введите адрес" value="<%= user.address || '' %>">
+        </div>
+        <div>
+          <label for="old_password">Текущий пароль (для смены пароля):</label>
+          <input type="password" id="old_password" name="old_password" placeholder="Введите текущий пароль">
+        </div>
+        <div>
+          <label for="password">Новый пароль:</label>
+          <input type="password" id="password" name="password" placeholder="Введите новый пароль">
+        </div>
+        <button type="submit">Сохранить</button>
+      </form>
+    </section>
+  </div>
+
+  <footer class="tm-footer">
+    <p>© 2024 Все права защищены.</p>
+  </footer>
+</body>
+</html>

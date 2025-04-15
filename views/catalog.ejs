@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог коттеджей</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header.tm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333;
+      padding: 20px;
+      color: white;
+    }
+    .tm-logo {
+      width: 120px;
+      height: auto;
+    }
+    .tm-nav ul {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tm-nav ul li {
+      margin: 0 15px;
+    }
+    .tm-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .tm-nav ul li a:hover {
+      text-decoration: underline;
+    }
+    .catalog {
+      margin-top: 20px;
+    }
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filters label {
+      color: black;
+      font-size: 16px;
+      font-weight: normal;
+      margin-right: 5px;
+    }
+    .filters input, .filters select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 200px;
+      color: black;
+    }
+    .filters input::placeholder {
+      color: black;
+      font-size: 16px;
+    }
+    .filters select option {
+      color: black;
+      font-size: 16px;
+    }
+    .filters button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .filters button:hover {
+      background-color: #0056b3;
+    }
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .room-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+      position: relative;
+      max-width: 360px; /* Ограничение максимальной ширины карточки */
+      margin: 0 auto; /* Центрирование карточки */
+    }
+    .room-card img {
+      width: 100%;
+      max-width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 5px;
+      display: block;
+    }
+    .room-card h3 {
+      margin: 10px 0;
+      font-size: 20px;
+    }
+    .room-card p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .room-card a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .room-card a:hover {
+      background-color: #0056b3;
+    }
+    .room-card .price {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 5px 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: 16px;
+      border-radius: 3px;
+      display: none;
+    }
+    .room-card:hover .price {
+      display: block;
+    }
+    footer.tm-footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+    }
+    @media (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .filters input, .filters select {
+        width: 100%;
+      }
+      .room-grid {
+        grid-template-columns: 1fr;
+      }
+      .room-card {
+        max-width: 100%; /* На мобильных карточка занимает всю ширину */
+      }
+      .room-card img {
+        height: 150px;
+      }
+    }
+    @media (max-width: 480px) {
+      .room-card img {
+        height: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="tm-header">
+    <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+    <nav class="tm-nav">
+      <ul>
+        <li><a href="/client-dashboard">Главная</a></li>
+        <li><a href="/catalog">Каталог</a></li>     
+        <li><a href="/cart">Корзина</a></li>      
+        <li><a href="/view-bookings">История заказов</a></li>
+        <li><a href="/logout">Выйти</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="catalog">
+      <h2>Каталог коттеджей</h2>
+      <form class="filters" action="/catalog" method="GET">
+        <label for="search">Поиск по названию:</label>
+        <input type="text" id="search" name="search" placeholder="Введите название" value="<%= search %>">
+        <label for="sort">Сортировка:</label>
+        <select id="sort" name="sort">
+          <option value="">Без сортировки</option>
+          <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>По цене (возр.)</option>
+          <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>По цене (убыв.)</option>
+        </select>
+        <label for="max_guests">Макс. гостей:</label>
+        <input type="number" id="max_guests" name="max_guests" placeholder="Количество гостей" value="<%= max_guests %>" min="1">
+        <button type="submit">Применить</button>
+      </form>
+      <div class="room-grid">
+        <% rooms.forEach(room => { %>
+          <div class="room-card">
+            <% 
+              let imageSrc;
+              switch (room.number) {
+                case 'Мишутка':
+                  imageSrc = '/images/AAA_0136.jpg';
+                  break;
+                case 'Маша Медведь':
+                  imageSrc = '/images/pokraska-derevyannogo-doma-02.jpg';
+                  break;
+                case 'Мечта':
+                  imageSrc = '/images/4.jpg';
+                  break;
+                case 'Иван да Марья':
+                  imageSrc = '/images/AAA_9648.jpg';
+                  break;
+                case 'Теремок':
+                  imageSrc = '/images/AAA_57888.jpg';
+                  break;
+                case 'Домовенок':
+                  imageSrc = '/images/9485645-dereviannyi-dom-vnutri-otdelka-1.jpg';
+                  break;
+                default:
+                  imageSrc = '/images/default.jpg';
+              }
+            %>
+            <img src="<%= imageSrc %>" alt="<%= room.number %>">
+            <h3><%= room.number %></h3>
+            <div class="price"><%= room.price %> руб.</div>
+            <p>Цена: <%= room.price %> руб./сутки</p>
+            <p>Гостей: <%= room.max_guests %></p>
+            <a href="/room/<%= room.id %>">Подробнее</a>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  </div>
+
+  <footer class="tm-footer">
+    <p>© 2024 Все права защищены.</p>
+  </footer>
+</body>
+</html>

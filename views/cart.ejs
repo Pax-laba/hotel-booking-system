@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Корзина</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header.tm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333;
+      padding: 20px;
+      color: white;
+    }
+    .tm-logo {
+      width: 120px;
+      height: auto;
+    }
+    .tm-nav ul {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tm-nav ul li {
+      margin: 0 15px;
+    }
+    .tm-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .tm-nav ul li a:hover {
+      text-decoration: underline;
+    }
+    .cart {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .cart h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+    .checkout-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .checkout-btn:hover {
+      background-color: #0056b3;
+    }
+    footer.tm-footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header class="tm-header">
+    <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
+    <nav class="tm-nav">
+      <ul>
+        <li><a href="/client-dashboard">Главная</a></li>
+        <li><a href="/catalog">Каталог</a></li>     
+        <li><a href="/cart">Корзина</a></li>      
+        <li><a href="/view-bookings">История заказов</a></li>
+        <li><a href="/logout">Выйти</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="cart">
+      <h2>Ваша корзина</h2>
+      <% if (cart.rooms.length === 0 && cart.transfers.length === 0) { %>
+        <p>Корзина пуста.</p>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr>
+              <th>Тип</th>
+              <th>Описание</th>
+              <th>Даты/Время</th>
+              <th>Стоимость</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% cart.rooms.forEach((room, index) => { %>
+              <tr>
+                <td>Коттедж</td>
+                <td><%= room.number %></td>
+                <td><%= new Date(room.start_date).toLocaleDateString('ru-RU') %> - <%= new Date(room.end_date).toLocaleDateString('ru-RU') %></td>
+                <td><%= room.total_cost %> руб.</td>
+                <td>
+                  <form action="/cart/remove" method="POST">
+                    <input type="hidden" name="index" value="<%= index %>">
+                    <input type="hidden" name="type" value="room">
+                    <button type="submit" class="delete-btn">Удалить</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+            <% cart.transfers.forEach((transfer, index) => { %>
+              <tr>
+                <td>Трансфер</td>
+                <td><%= transfer.destination %></td>
+                <td><%= new Date(transfer.transfer_date).toLocaleDateString('ru-RU') %> <%= transfer.transfer_time %></td>
+                <td>-</td>
+                <td>
+                  <form action="/cart/remove" method="POST">
+                    <input type="hidden" name="index" value="<%= index %>">
+                    <input type="hidden" name="type" value="transfer">
+                    <button type="submit" class="delete-btn">Удалить</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <a href="/checkout" class="checkout-btn">Оформить заказ</a>
+      <% } %>
+    </section>
+  </div>
+
+  <footer class="tm-footer">
+    <p>© 2024 Все права защищены.</p>
+  </footer>
+</body>
+</html>

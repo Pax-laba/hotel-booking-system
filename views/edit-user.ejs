@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать пользователя</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .admin-dashboard {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f7f7f7;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .admin-dashboard h1 {
+            font-size: 24px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .content-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .styled-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #007BFF;
+            outline: none;
+            background-color: #ffffff;
+        }
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .btn-primary {
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #333;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #e2e2e2;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-dashboard">
+        <h1>Редактировать пользователя</h1>
+        <div class="content-container">
+            <form action="/admin/update-user/<%= user.id %>" method="POST" class="styled-form">
+                <div class="form-group">
+                    <label for="name">Имя</label>
+                    <input type="text" id="name" name="name" value="<%= user.name %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="<%= user.email %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Роль</label>
+                    <select id="role" name="role" required>
+                        <option value="client" <%= user.role === 'client' ? 'selected' : '' %>>Клиент</option>
+                        <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Администратор</option>
+                    </select>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-primary">Сохранить</button>
+                    <a href="/admin-dashboard" class="btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

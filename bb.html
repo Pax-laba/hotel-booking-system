@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" type="text/css" href="css/slick.css">
+    <script type="text/javascript" src="dist/slick.js"></script>
+    <script type="text/javascript" src="dist/jquery.scrollUp.js"></script>
+    <script type="text/javascript" src="dist/demo.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+</head>
+<body>
+    <header class="tm-header">
+        <img class="tm-logo" src="images/bear-icon-logo-design-illustration_586739-592.avif" width="100px" height="500px" alt="Majestic Hotel Resort">
+        <nav class="tm-nav">
+            <div>
+                <ul>
+                    <li class="tm-list"><a href="index.html">Главная</a></li>
+                    <li class="tm-list"><a href="explore.html">Инфо</a></li>
+                    <li class="tm-list"><a href="rooms.html">О нас</a></li>
+                    <li class="tm-list"><a href="bb.html">Бронирование</a></li>
+                    <li><a href="contact.html">Контакты</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <section class="booking-form">
+        <div class="form-container">
+            <h2>Вход или Регистрация</h2>
+        
+            <!-- Форма входа -->
+            <div id="login-form">
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Пароль:</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn">Войти</button>
+                </form>
+                <p>Нет аккаунта? <a href="#" id="show-register">Зарегистрироваться</a></p>
+            </div>
+        
+<!-- Форма регистрации -->
+<div id="register-form" style="display: none;">
+    <form action="/register" method="POST">
+        <div class="form-group">
+            <label for="register-name">Имя:</label>
+            <input type="text" id="register-name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="register-email">Email:</label>
+            <input type="email" id="register-email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="register-password">Пароль:</label>
+            <input type="password" id="register-password" name="password" required>
+        </div>
+        <button type="submit" class="btn">Зарегистрироваться</button>
+    </form>
+    <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
+</div>
+
+        
+    </section>
+
+    <footer class="tm-footer">
+        <div class="tm-us">
+            <p class="bold">О нас</p>
+            <p>Мы являемся частью сети отелей класса люкс, который распространяется по всему миру. Мы обеспечиваем роскошный отдых с различными дополнительными и бесплатными услугами, которые заставят вас приходить к нам снова и снова.</p>
+        </div>
+        <div class="tm-address">
+            <p class="bold">Адрес</p>
+            <p>415, Россия, Медвежьегорск. Телефон: +79113156767. Почта: turbaza@info.com</p>
+        </div>
+        <div class="tm-media">
+            <a href="#"><img src="images/fb.png"></a>
+            <a href="#"><img src="images/G.png"></a>
+            <a href="#"><img src="images/twittr.png"></a>
+            <a href="#"><img src="images/insta.png"></a>
+        </div>
+    </footer>
+
+    <script>
+        // Переключение между формами
+        document.getElementById('show-register').addEventListener('click', function() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        });
+
+        document.getElementById('show-login').addEventListener('click', function() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
