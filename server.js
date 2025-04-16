@@ -1097,7 +1097,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const cookie = require('cookie');
 
-const wss = new WebSocket.Server({ server: http.createServer().listen(8080) });
+// Создаем HTTP-сервер на основе Express
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server }); // Привязываем WebSocket к серверу Express
 
 wss.on('connection', (ws, req) => {
   const cookies = cookie.parse(req.headers.cookie || '');
