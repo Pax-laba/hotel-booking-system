@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Личный кабинет</title>
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -110,6 +111,7 @@
       font-size: 14px;
       margin-bottom: 10px;
     }
+
     footer.tm-footer {
       background-color: #333;
       color: white;
@@ -124,10 +126,11 @@
     <img class="tm-logo" src="/images/bear-icon-logo-design-illustration_586739-592.avif" alt="Majestic Hotel Resort">
     <nav class="tm-nav">
       <ul>
-        <li><a href="/profile">Личный кабинет</a></li>
+        <li><a href="/client-dashboard">Главная</a></li>
         <li><a href="/catalog">Каталог</a></li>     
         <li><a href="/cart">Корзина</a></li>      
         <li><a href="/view-bookings">История заказов</a></li>
+        <li><a href="/profile">Личный кабинет</a></li>
         <li><a href="/logout">Выйти</a></li>
       </ul>
     </nav>
@@ -140,6 +143,7 @@
       <p><strong>Телефон:</strong> <%= user.phone || 'Не указан' %></p>
       <p><strong>Email:</strong> <%= user.email %></p>
       <p><strong>Адрес:</strong> <%= user.address || 'Не указан' %></p>
+      <p><strong>Последнее обновление:</strong> <%= new Date(user.updated_at).toLocaleDateString('ru-RU') %></p>
       <h3>Редактировать профиль</h3>
       <% if (typeof error !== 'undefined') { %>
         <p class="error"><%= error %></p>
@@ -174,8 +178,13 @@
     </section>
   </div>
 
+
+
   <footer class="tm-footer">
-    <p>© 2024 Все права защищены.</p>
+    <p>© 2025 Все права защищены.</p>
   </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 </body>
 </html>

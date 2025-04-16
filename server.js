@@ -1091,6 +1091,177 @@ app.get('/visit-statistics', requireAdmin, async (req, res) => {
     res.status(500).send('Ошибка сервера');
   }
 });
+
+//Чат-бот 
+const http = require('http');
+const WebSocket = require('ws');
+const cookie = require('cookie');
+
+const wss = new WebSocket.Server({ server: http.createServer().listen(8080) });
+
+wss.on('connection', (ws, req) => {
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const sessionId = cookies['connect.sid']?.replace(/^s:/, '').split('.')[0] || '';
+
+  ws.on('message', async (data) => {
+    try {
+      const msg = JSON.parse(data);
+      const userMessage = msg.message.toLowerCase().trim();
+
+      // Получение сессии
+      const sessionQuery = await pool.query(
+        'SELECT sess FROM session WHERE sid = $1 AND sess->\'user\' IS NOT NULL',
+        [sessionId]
+      );
+      const user = sessionQuery.rows[0]?.sess?.user;
+
+      if (!user) {
+        ws.send(JSON.stringify({ message: 'Похоже, ты не вошел в аккаунт. Попробуй войти снова!' }));
+        return;
+      }
+
+      if (userMessage === 'init') {
+        const roomsQuery = await pool.query(
+          'SELECT id, number FROM rooms WHERE availability_status = $1 ORDER BY number',
+          ['available']
+        );
+        ws.send(JSON.stringify({ rooms: roomsQuery.rows }));
+      } else if (userMessage.includes('поиск')) {
+        const searchTerm = userMessage.replace('поиск', '').trim();
+        let query = 'SELECT id, number, max_guests, price, image_url FROM rooms WHERE availability_status = $1';
+        const params = ['available'];
+        if (searchTerm) {
+          query += ' AND (number ILIKE $2 OR max_guests::text ILIKE $2)';
+          params.push(`%${searchTerm}%`);
+        }
+        query += ' ORDER BY number';
+        const result = await pool.query(query, params);
+        ws.send(JSON.stringify(
+          result.rows.length === 0
+            ? { message: 'Свободных коттеджей не найдено. Попробуй позже!' }
+            : { cottages: result.rows }
+        ));
+      } else if (userMessage.includes('подробно')) {
+        const cottageId = userMessage.replace('подробно', '').trim();
+        if (!cottageId.match(/^\d+$/)) {
+          ws.send(JSON.stringify({ message: 'ID коттеджа должен быть числом, например: 1' }));
+          return;
+        }
+        const cottageQuery = await pool.query(
+          'SELECT id, number, max_guests, price, availability_status, image_url FROM rooms WHERE id = $1',
+          [cottageId]
+        );
+        ws.send(JSON.stringify(
+          cottageQuery.rows.length === 0
+            ? { message: 'Такого коттеджа нет. Напиши другой ID!' }
+            : { cottage: cottageQuery.rows[0] }
+        ));
+      } else if (userMessage.includes('get-dates')) {
+        const roomId = userMessage.replace('get-dates', '').trim();
+        if (!roomId.match(/^\d+$/)) {
+          ws.send(JSON.stringify({ message: 'ID коттеджа должен быть числом!' }));
+          return;
+        }
+        const bookingsQuery = await pool.query(
+          'SELECT start_date, end_date FROM bookings WHERE room_id = $1 AND status IN ($2, $3)',
+          [roomId, 'reserved', 'confirmed']
+        );
+        const unavailableDates = bookingsQuery.rows.map(b => ({
+          from: b.start_date,
+          to: b.end_date
+        }));
+        ws.send(JSON.stringify({ unavailableDates }));
+      } else if (userMessage.includes('заказ')) {
+        const match = userMessage.match(/заказ\s+(\d+)\s+(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})/);
+        if (!match) {
+          ws.send(JSON.stringify({ 
+            message: 'Напиши команду правильно, например: заказ 1 2025-05-01 2025-05-05' 
+          }));
+          return;
+        }
+        const [, roomId, startDate, endDate] = match;
+        const roomQuery = await pool.query(
+          'SELECT price, availability_status, number FROM rooms WHERE id = $1',
+          [roomId]
+        );
+        if (roomQuery.rows.length === 0 || roomQuery.rows[0].availability_status !== 'available') {
+          ws.send(JSON.stringify({ message: 'Этот коттедж недоступен. Выбери другой!' }));
+          return;
+        }
+        const overlapQuery = `
+          SELECT id FROM bookings
+          WHERE room_id = $1 AND status IN ('reserved', 'confirmed')
+          AND daterange(start_date, end_date, '[]') && daterange($2, $3, '[]')
+        `;
+        const overlapResult = await pool.query(overlapQuery, [roomId, startDate, endDate]);
+        if (overlapResult.rows.length > 0) {
+          ws.send(JSON.stringify({ message: 'Эти даты заняты. Выбери другие даты!' }));
+          return;
+        }
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (start < today) {
+          ws.send(JSON.stringify({ message: 'Нельзя бронировать прошлые даты. Выбери даты с сегодняшнего дня!' }));
+          return;
+        }
+        if (end <= start) {
+          ws.send(JSON.stringify({ message: 'Дата отъезда должна быть позже даты приезда!' }));
+          return;
+        }
+        const price = roomQuery.rows[0].price;
+        const roomNumber = roomQuery.rows[0].number;
+        const days = Math.ceil((end - start) / (1000 * 3600 * 24));
+        const totalCost = days * price;
+        await pool.query(
+          'INSERT INTO bookings (user_id, room_id, start_date, end_date, status, total_cost) VALUES ($1, $2, $3, $4, $5, $6)',
+          [user.id, roomId, startDate, endDate, 'reserved', totalCost]
+        );
+        ws.send(JSON.stringify({ 
+          message: `Готово! Ты забронировал "${roomNumber}" (ID: ${roomId}) с ${new Date(startDate).toLocaleDateString('ru-RU')} по ${new Date(endDate).toLocaleDateString('ru-RU')}. Стоимость: ${totalCost} руб.` 
+        }));
+      } else if (userMessage.includes('история')) {
+        const bookingsQuery = `
+          SELECT b.*, r.number AS room_number
+          FROM bookings b JOIN rooms r ON b.room_id = r.id
+          WHERE b.user_id = $1 ORDER BY b.start_date DESC LIMIT 5
+        `;
+        const transfersQuery = `
+          SELECT * FROM transfers
+          WHERE user_id = $1 ORDER BY transfer_date DESC LIMIT 5
+        `;
+        const bookings = await pool.query(bookingsQuery, [user.id]);
+        const transfers = await pool.query(transfersQuery, [user.id]);
+        const history = [
+          ...bookings.rows.map(b => ({
+            type: 'booking',
+            room_number: b.room_number,
+            start_date: b.start_date,
+            end_date: b.end_date,
+            total_cost: b.total_cost,
+            status: b.status
+          })),
+          ...transfers.rows.map(t => ({
+            type: 'transfer',
+            destination: t.destination,
+            transfer_date: t.transfer_date,
+            transfer_time: t.transfer_time,
+            status: t.status
+          }))
+        ];
+        ws.send(JSON.stringify({ history }));
+      } else {
+        ws.send(JSON.stringify({ 
+          message: 'Не понял команду. Попробуй кнопки: "Найти коттеджи", "Забронировать" или "Мои заказы"!' 
+        }));
+      }
+    } catch (error) {
+      console.error('Ошибка чат-бота:', error);
+      ws.send(JSON.stringify({ message: 'Ой, что-то пошло не так! Попробуй снова через пару секунд.' }));
+    }
+  });
+});
 // Запуск сервера
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

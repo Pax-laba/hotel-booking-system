@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель управления клиентом</title>
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -107,6 +108,247 @@
             bottom: 0;
             width: 100%;
         }
+        .chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #007BFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .chatbot-icon:hover {
+            transform: scale(1.1);
+        }
+        .chatbot-icon img {
+            width: 40px;
+            height: 40px;
+        }
+        .chatbot-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 400px;
+            height: 500px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chatbot-window.open {
+            display: flex;
+        }
+        .chatbot-header {
+            background-color: #007BFF;
+            color: white;
+            padding: 12px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .chatbot-messages p {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        .chatbot-messages .bot {
+            background-color: #e6f3ff;
+            color: #333;
+            margin-right: 10px;
+        }
+        .chatbot-messages .user {
+            background-color: #007BFF;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .chatbot-messages .cottage-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .chatbot-messages .cottage {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chatbot-messages .cottage img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            transition: filter 0.3s ease;
+        }
+        .chatbot-messages .cottage .name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 14px;
+            text-align: center;
+        }
+        .chatbot-messages .cottage .price {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+        .chatbot-messages .cottage:hover .price {
+            display: block;
+        }
+        .chatbot-messages .cottage-detail {
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chatbot-messages .cottage-detail img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .chatbot-messages .history-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 5px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .chatbot-messages .history-item p {
+            margin: 5px 0;
+            padding: 0;
+            font-size: 14px;
+        }
+        .chatbot-input {
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 8px;
+        }
+        .chatbot-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #333;
+        }
+        .chatbot-input input:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        .chatbot-input input::placeholder {
+            color: rgba(0, 0, 0, 0.5);
+            font-size: 16px;
+        }
+        .chatbot-input button {
+            padding: 12px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .chatbot-input button:hover {
+            background-color: #0056b3;
+        }
+        .chatbot-buttons {
+            padding: 10px 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        .chatbot-buttons button {
+            padding: 8px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .chatbot-buttons button:hover {
+            background-color: #0056b3;
+        }
+        .chatbot-form {
+            padding: 15px;
+            background-color: #f9f9f9;
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+        .chatbot-form.active {
+            display: block;
+        }
+        .chatbot-form select, .chatbot-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #333;
+            box-sizing: border-box;
+        }
+        .chatbot-form select:focus, .chatbot-form input:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        .chatbot-form select::placeholder,
+        .chatbot-form input::placeholder {
+            color: rgba(0, 0, 0, 0.5);
+            font-size: 16px;
+        }
+        .chatbot-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .chatbot-form button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -131,8 +373,254 @@
             <li><a href="/view-bookings">Посмотреть историю заказов</a></li>
             <li><a href="/create-booking">Сделать новое бронирование</a></li>
             <li><a href="/order-transfer">Заказать трансфер</a></li>
-            <!-- <li><a href="/order-service">Заказать услугу</a></li> -->
         </ul>
-    <footer class="tm-footer"></footer>
+
+        <div class="chatbot-icon" onclick="toggleChatbot()">
+            <img src="https://cdn-icons-png.flaticon.com/512/8943/8943377.png" alt="Чат-бот">
+        </div>
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">Чат-бот отеля</div>
+            <div class="chatbot-messages" id="chatMessages">
+                <p class="bot">Привет, <%= user.name %>! Давай выберем коттедж? Нажми на кнопки ниже!</p>
+            </div>
+            <div class="chatbot-form" id="bookingForm">
+                <select id="roomId" onchange="updateUnavailableDates()" required>
+                    <option value="" disabled selected>Выбери коттедж</option>
+                </select>
+                <input type="text" id="startDate" placeholder="Дата приезда" required>
+                <input type="text" id="endDate" placeholder="Дата отъезда" required>
+                <button onclick="submitBooking()">Забронировать</button>
+                <button onclick="cancelBooking()">Отмена</button>
+            </div>
+            <div class="chatbot-buttons" id="chatbotButtons">
+                <button onclick="sendMessage('поиск')">Найти коттеджи</button>
+                <button onclick="toggleBookingForm()">Забронировать</button>
+                <button onclick="sendMessage('история')">Мои заказы</button>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatInput" placeholder="Напиши ID коттеджа">
+                <button onclick="sendMessage()">Отправить</button>
+            </div>
+        </div>
+    </section>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        const ws = new WebSocket('ws://localhost:8080');
+        const chatbotWindow = document.getElementById('chatbotWindow');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const bookingForm = document.getElementById('bookingForm');
+        const roomSelect = document.getElementById('roomId');
+        let unavailableDates = [];
+        let awaitingCottageId = false;
+
+        ws.onopen = () => {
+            console.log('WebSocket подключен');
+            ws.send(JSON.stringify({ message: 'init' }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.rooms) {
+                roomSelect.innerHTML = '<option value="" disabled selected>Выбери коттедж</option>';
+                data.rooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = `${room.number} (ID: ${room.id})`;
+                    roomSelect.appendChild(option);
+                });
+            } else if (data.cottages) {
+                const p = document.createElement('p');
+                p.className = 'bot';
+                p.textContent = 'Вот свободные коттеджи! Напиши ID того, который понравился.';
+                chatMessages.appendChild(p);
+                const div = document.createElement('div');
+                div.className = 'cottage-grid';
+                data.cottages.forEach(c => {
+                    const item = document.createElement('div');
+                    item.className = 'cottage';
+                    item.innerHTML = `
+                        <img src="${c.image_url || '/images/placeholder.jpg'}" alt="${c.number}">
+                        <div class="name">${c.number} (ID: ${c.id})</div>
+                        <div class="price">${c.price} руб./день</div>
+                    `;
+                    div.appendChild(item);
+                });
+                chatMessages.appendChild(div);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                awaitingCottageId = true;
+            } else if (data.cottage) {
+                const div = document.createElement('div');
+                div.className = 'cottage-detail';
+                div.innerHTML = `
+                    <img src="${data.cottage.image_url || '/images/placeholder.jpg'}" alt="${data.cottage.number}">
+                    <p><strong>Коттедж:</strong> ${data.cottage.number} (ID: ${data.cottage.id})</p>
+                    <p><strong>Гостей:</strong> ${data.cottage.max_guests}</p>
+                    <p><strong>Цена:</strong> ${data.cottage.price} руб./день</p>
+                    <p><strong>Статус:</strong> ${data.cottage.availability_status === 'available' ? 'Свободен' : 'Занят'}</p>
+                `;
+                chatMessages.appendChild(div);
+                document.getElementById('chatbotButtons').innerHTML = `
+                    <button onclick="sendMessage('поиск')">Найти коттеджи</button>
+                    <button onclick="toggleBookingForm()">Забронировать</button>
+                    <button onclick="sendMessage('история')">Мои заказы</button>
+                `;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                awaitingCottageId = false;
+            } else if (data.history) {
+                const p = document.createElement('p');
+                p.className = 'bot';
+                p.textContent = data.history.length > 0 ? 'Вот твои заказы:' : 'Пока ты ничего не бронировал. Давай найдем коттедж?';
+                chatMessages.appendChild(p);
+                data.history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = item.type === 'booking' ? `
+                        <p><strong>Коттедж:</strong> ${item.room_number}</p>
+                        <p><strong>Даты:</strong> ${new Date(item.start_date).toLocaleDateString('ru-RU')} - ${new Date(item.end_date).toLocaleDateString('ru-RU')}</p>
+                        <p><strong>Стоимость:</strong> ${item.total_cost} руб.</p>
+                        <p><strong>Статус:</strong> ${item.status === 'reserved' ? 'Забронировано' : 'Подтверждено'}</p>
+                    ` : `
+                        <p><strong>Трансфер:</strong> ${item.destination}</p>
+                        <p><strong>Дата:</strong> ${new Date(item.transfer_date).toLocaleDateString('ru-RU')} ${item.transfer_time}</p>
+                        <p><strong>Статус:</strong> ${item.status === 'reserved' ? 'Забронировано' : 'Подтверждено'}</p>
+                    `;
+                    chatMessages.appendChild(div);
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else if (data.unavailableDates) {
+                unavailableDates = data.unavailableDates;
+                initializeCalendar();
+            } else {
+                const p = document.createElement('p');
+                p.className = 'bot';
+                p.textContent = data.message;
+                chatMessages.appendChild(p);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                if (data.message.includes('Готово!')) {
+                    document.getElementById('chatbotButtons').innerHTML = `
+                        <button onclick="sendMessage('поиск')">Найти коттеджи</button>
+                        <button onclick="toggleBookingForm()">Забронировать</button>
+                        <button onclick="sendMessage('история')">Мои заказы</button>
+                    `;
+                }
+            }
+        };
+
+        function toggleChatbot() {
+            chatbotWindow.classList.toggle('open');
+            if (chatbotWindow.classList.contains('open')) {
+                const p = document.createElement('p');
+                p.className = 'bot';
+                chatMessages.appendChild(p);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            bookingForm.classList.remove('active');
+        }
+
+        function toggleBookingForm() {
+            bookingForm.classList.toggle('active');
+            const p = document.createElement('p');
+            p.className = 'bot';
+            p.textContent = 'Выбери коттедж из списка и укажи даты для бронирования.';
+            chatMessages.appendChild(p);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            initializeCalendar();
+        }
+
+        function cancelBooking() {
+            bookingForm.classList.remove('active');
+            document.getElementById('roomId').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            const p = document.createElement('p');
+            p.className = 'bot';
+            p.textContent = 'Бронирование отменено. Чем ещё помочь?';
+            chatMessages.appendChild(p);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            document.getElementById('chatbotButtons').innerHTML = `
+                <button onclick="sendMessage('поиск')">Найти коттеджи</button>
+                <button onclick="toggleBookingForm()">Забронировать</button>
+                <button onclick="sendMessage('история')">Мои заказы</button>
+            `;
+        }
+
+        function sendMessage(text) {
+            const message = text || chatInput.value.trim();
+            if (!message) return;
+            const p = document.createElement('p');
+            p.className = 'user';
+            p.textContent = message;
+            chatMessages.appendChild(p);
+            ws.send(JSON.stringify({ message }));
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function submitBooking() {
+            const roomId = document.getElementById('roomId').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (!roomId || !startDate || !endDate) {
+                const p = document.createElement('p');
+                p.className = 'bot';
+                p.textContent = 'Пожалуйста, выбери коттедж и укажи обе даты!';
+                chatMessages.appendChild(p);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return;
+            }
+            const message = `заказ ${roomId} ${startDate} ${endDate}`;
+            sendMessage(message);
+            bookingForm.classList.remove('active');
+            document.getElementById('roomId').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            bookingForm.style.height = ''; // Сброс высоты формы
+        }
+
+        function updateUnavailableDates() {
+            const roomId = document.getElementById('roomId').value;
+            if (roomId) {
+                ws.send(JSON.stringify({ message: `get-dates ${roomId}` }));
+            }
+        }
+
+        function initializeCalendar() {
+            flatpickr("#startDate", {
+                disable: unavailableDates,
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                onChange: (selectedDates) => {
+                    const startDate = selectedDates[0];
+                    if (startDate) {
+                        const minEndDate = new Date(startDate);
+                        minEndDate.setDate(startDate.getDate() + 1);
+                        flatpickr("#endDate", {
+                            disable: unavailableDates,
+                            dateFormat: "Y-m-d",
+                            minDate: minEndDate
+                        });
+                    }
+                }
+            });
+            flatpickr("#endDate", {
+                disable: unavailableDates,
+                dateFormat: "Y-m-d",
+                minDate: "today"
+            });
+        }
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (awaitingCottageId && chatInput.value.trim().match(/^\d+$/)) {
+                    sendMessage(`подробно ${chatInput.value}`);
+                } else {
+                    sendMessage();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
