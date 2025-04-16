@@ -30,6 +30,7 @@ app.set('views', path.join(__dirname, 'views'));
 //   database: process.env.DB_NAME,
 //   port: process.env.DB_PORT || 5432
 // });
+const isProduction = process.env.NODE_ENV === 'production';
 // Подключение к PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
