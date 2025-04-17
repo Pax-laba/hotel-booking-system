@@ -433,92 +433,104 @@ ws.onclose = () => {
         };
 
         ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.rooms) {
-                roomSelect.innerHTML = '<option value="" disabled selected>Выбери коттедж</option>';
-                data.rooms.forEach(room => {
-                    const option = document.createElement('option');
-                    option.value = room.id;
-                    option.textContent = `${room.number} (ID: ${room.id})`;
-                    roomSelect.appendChild(option);
-                });
-            } else if (data.cottages) {
-                const p = document.createElement('p');
-                p.className = 'bot';
-                p.textContent = 'Вот свободные коттеджи! Напиши ID того, который понравился.';
-                chatMessages.appendChild(p);
-                const div = document.createElement('div');
-                div.className = 'cottage-grid';
-                data.cottages.forEach(c => {
-                    const item = document.createElement('div');
-                    item.className = 'cottage';
-                    item.innerHTML = `
-                        <img src="${c.image_url || '/images/placeholder.jpg'}" alt="${c.number}">
-                        <div class="name">${c.number} (ID: ${c.id})</div>
-                        <div class="price">${c.price} руб./день</div>
-                    `;
-                    div.appendChild(item);
-                });
-                chatMessages.appendChild(div);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                awaitingCottageId = true;
-            } else if (data.cottage) {
-                const div = document.createElement('div');
-                div.className = 'cottage-detail';
-                div.innerHTML = `
-                    <img src="${data.cottage.image_url || '/images/placeholder.jpg'}" alt="${data.cottage.number}">
-                    <p><strong>Коттедж:</strong> ${data.cottage.number} (ID: ${data.cottage.id})</p>
-                    <p><strong>Гостей:</strong> ${data.cottage.max_guests}</p>
-                    <p><strong>Цена:</strong> ${data.cottage.price} руб./день</p>
-                    <p><strong>Статус:</strong> ${data.cottage.availability_status === 'available' ? 'Свободен' : 'Занят'}</p>
-                `;
-                chatMessages.appendChild(div);
-                document.getElementById('chatbotButtons').innerHTML = `
-                    <button onclick="sendMessage('поиск')">Найти коттеджи</button>
-                    <button onclick="toggleBookingForm()">Забронировать</button>
-                    <button onclick="sendMessage('история')">Мои заказы</button>
-                `;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                awaitingCottageId = false;
-            } else if (data.history) {
-                const p = document.createElement('p');
-                p.className = 'bot';
-                p.textContent = data.history.length > 0 ? 'Вот твои заказы:' : 'Пока ты ничего не бронировал. Давай найдем коттедж?';
-                chatMessages.appendChild(p);
-                data.history.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = item.type === 'booking' ? `
-                        <p><strong>Коттедж:</strong> ${item.room_number}</p>
-                        <p><strong>Даты:</strong> ${new Date(item.start_date).toLocaleDateString('ru-RU')} - ${new Date(item.end_date).toLocaleDateString('ru-RU')}</p>
-                        <p><strong>Стоимость:</strong> ${item.total_cost} руб.</p>
-                        <p><strong>Статус:</strong> ${item.status === 'reserved' ? 'Забронировано' : 'Подтверждено'}</p>
-                    ` : `
-                        <p><strong>Трансфер:</strong> ${item.destination}</p>
-                        <p><strong>Дата:</strong> ${new Date(item.transfer_date).toLocaleDateString('ru-RU')} ${item.transfer_time}</p>
-                        <p><strong>Статус:</strong> ${item.status === 'reserved' ? 'Забронировано' : 'Подтверждено'}</p>
-                    `;
-                    chatMessages.appendChild(div);
-                });
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            } else if (data.unavailableDates) {
-                unavailableDates = data.unavailableDates;
-                initializeCalendar();
-            } else {
-                const p = document.createElement('p');
-                p.className = 'bot';
-                p.textContent = data.message;
-                chatMessages.appendChild(p);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                if (data.message.includes('Готово!')) {
-                    document.getElementById('chatbotButtons').innerHTML = `
-                        <button onclick="sendMessage('поиск')">Найти коттеджи</button>
-                        <button onclick="toggleBookingForm()">Забронировать</button>
-                        <button onclick="sendMessage('история')">Мои заказы</button>
-                    `;
-                }
-            }
-        };
+  console.log('WebSocket received:', event.data);
+  const data = JSON.parse(event.data);
+  if (!data) {
+    const p = document.createElement('p');
+    p.className = 'bot';
+    p.textContent = 'Ошибка сервера. Попробуй позже!';
+    chatMessages.appendChild(p);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return;
+  }
+  if (data.rooms) {
+    roomSelect.innerHTML = '<option value="" disabled selected>Выбери коттедж</option>';
+    data.rooms.forEach(room => {
+      const option = document.createElement('option');
+      option.value = room.id;
+      option.textContent = `${room.number} (ID: ${room.id})`;
+      roomSelect.appendChild(option);
+    });
+  } else if (data.cottages) {
+    const p = document.createElement('p');
+    p.className = 'bot';
+    p.textContent = 'Вот свободные коттеджи! Кликни на коттедж для подробностей.';
+    chatMessages.appendChild(p);
+    const div = document.createElement('div');
+    div.className = 'cottage-grid';
+    data.cottages.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'cottage';
+      item.dataset.id = c.id; // Сохраняем ID коттеджа
+      item.innerHTML = `
+        <img src="${c.image_url || '/images/placeholder.jpg'}" alt="${c.number}">
+        <div class="name">${c.number} (ID: ${c.id})</div>
+        <div class="price">${c.price} руб./день</div>
+      `;
+      item.addEventListener('click', () => {
+        sendMessage(`подробно ${c.id}`);
+      });
+      div.appendChild(item);
+    });
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    awaitingCottageId = false; // Отключаем ожидание ввода ID
+  } else if (data.cottage) {
+    const div = document.createElement('div');
+    div.className = 'cottage-detail';
+    div.innerHTML = `
+      <img src="${data.cottage.image_url || '/images/placeholder.jpg'}" alt="${data.cottage.number}">
+      <p><strong>Коттедж:</strong> ${data.cottage.number} (ID: ${data.cottage.id})</p>
+      <p><strong>Гостей:</strong> ${data.cottage.max_guests}</p>
+      <p><strong>Цена:</strong> ${data.cottage.price} руб./день</p>
+      <p><strong>Статус:</strong> ${data.cottage.availability_status === 'available' ? 'Свободен' : 'Занят'}</p>
+    `;
+    chatMessages.appendChild(div);
+    document.getElementById('chatbotButtons').innerHTML = `
+      <button onclick="sendMessage('поиск')">Найти коттеджи</button>
+      <button onclick="toggleBookingForm()">Забронировать</button>
+      <button onclick="sendMessage('история')">Мои заказы</button>
+    `;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } else if (data.history) {
+    const p = document.createElement('p');
+    p.className = 'bot';
+    p.textContent = data.history.length > 0 ? 'Вот твои заказы:' : 'Пока ты ничего не бронировал. Давай найдем коттедж?';
+    chatMessages.appendChild(p);
+    data.history.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = item.type === 'booking' ? `
+        <p><strong>Коттедж:</strong> ${item.room_number}</p>
+        <p><strong>Даты:</strong> ${new Date(item.start_date).toLocaleDateString('ru-RU')} - ${new Date(item.end_date).toLocaleDateString('ru-RU')}</p>
+        <p><strong>Стоимость:</strong> ${item.total_cost} руб.</p>
+        <p><strong>Статус:</strong> ${item.status === 'reserved' ? 'Забронировано' : 'Подтверждено'}</p>
+      ` : `
+        <p><strong>Трансфер:</strong> ${item.destination}</p>
+        <p><strong>Дата:</strong> ${new Date(item.transfer_date).toLocaleDateString('ru-RU')} ${item.transfer_time}</p>
+        <p><strong>Статус:</strong> ${item.status === 'reserved' ? 'Забронировано' : 'Подтверждено'}</p>
+      `;
+      chatMessages.appendChild(div);
+    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } else if (data.unavailableDates) {
+    unavailableDates = data.unavailableDates;
+    initializeCalendar();
+  } else {
+    const p = document.createElement('p');
+    p.className = 'bot';
+    p.textContent = data.message;
+    chatMessages.appendChild(p);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (data.message.includes('Готово!')) {
+      document.getElementById('chatbotButtons').innerHTML = `
+        <button onclick="sendMessage('поиск')">Найти коттеджи</button>
+        <button onclick="toggleBookingForm()">Забронировать</button>
+        <button onclick="sendMessage('история')">Мои заказы</button>
+      `;
+    }
+  }
+};
 
         function toggleChatbot() {
             chatbotWindow.classList.toggle('open');
@@ -624,14 +636,10 @@ ws.onclose = () => {
         }
 
         chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                if (awaitingCottageId && chatInput.value.trim().match(/^\d+$/)) {
-                    sendMessage(`подробно ${chatInput.value}`);
-                } else {
-                    sendMessage();
-                }
-            }
-        });
+  if (e.key === 'Enter') {
+    sendMessage();
+  }
+});
     </script>
 </body>
 </html>
