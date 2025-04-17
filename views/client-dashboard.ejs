@@ -407,7 +407,18 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
+        // const ws = new WebSocket('ws://localhost:8080');
         const ws = new WebSocket(`wss://${window.location.host}/`);
+ws.onopen = () => {
+  console.log('WebSocket подключен');
+  ws.send(JSON.stringify({ message: 'init' }));
+};
+ws.onerror = (error) => {
+  console.error('WebSocket error:', error);
+};
+ws.onclose = () => {
+  console.log('WebSocket closed');
+};
         const chatbotWindow = document.getElementById('chatbotWindow');
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');

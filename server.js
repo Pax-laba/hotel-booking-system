@@ -1107,6 +1107,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server }); // Привязываем WebSocket к серверу Express
 
 wss.on('connection', (ws, req) => {
+  console.log('WebSocket client connected');
   const cookies = cookie.parse(req.headers.cookie || '');
   const sessionId = cookies['connect.sid']?.replace(/^s:/, '').split('.')[0] || '';
 
@@ -1270,6 +1271,9 @@ wss.on('connection', (ws, req) => {
   });
 });
 // Запуск сервера
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+// app.listen(port, () => {
+//   console.log(`Server is running on http://localhost:${port}`);
+// });
+server.listen(process.env.PORT || 3000, () => {
+  console.log(`Server is running on port ${process.env.PORT || 3000}`);
 });
